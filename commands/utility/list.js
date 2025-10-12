@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder } = require("discord.js");
-const UtilityDB = require("../../utilityDB")
+const UtilityDB = require("../../utilityDB");
 
 const allowedUsers = ["1152859332757692447"];
 

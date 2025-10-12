@@ -50,7 +50,7 @@ module.exports = {
         const leaveButton = new ButtonBuilder()
             .setCustomId("leave")
             .setLabel("大会辞退")
-            .setStyle(ButtonStyle.Danger)
+            .setStyle(ButtonStyle.Danger);
         
         const configButton = new ButtonBuilder()
             .setCustomId("config")

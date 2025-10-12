@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 
+// 基礎とする
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName("ping")

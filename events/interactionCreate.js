@@ -16,9 +16,9 @@ module.exports = {
 			} catch (error) {
 				console.error(error);
 				if (interaction.replied || interaction.deferred) {
-					await interaction.followUp({ content: 'コマンドの実行中にエラーが起きました', flags: MessageFlags.ephemeral });
+					await interaction.followUp({ content: "コマンドの実行中にエラーが起きました", flags: MessageFlags.ephemeral });
 				} else {
-					await interaction.reply({ content: 'コマンドの実行中にエラーが起きました', flags: MessageFlags.ephemeral });
+					await interaction.reply({ content: "コマンドの実行中にエラーが起きました", flags: MessageFlags.ephemeral });
 				}
 			}
 		}

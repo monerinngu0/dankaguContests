@@ -8,7 +8,7 @@ const UtilityDB = require("../utilityDB");
 const Database = require("better-sqlite3");
 const dbPath = path.resolve(__dirname, "../db/contests.db");
 const db = new Database(dbPath);
-// テーブルがないなら作成
+// テーブルがない場合作成
 db.prepare(`
   CREATE TABLE IF NOT EXISTS contests (
     id TEXT PRIMARY KEY,

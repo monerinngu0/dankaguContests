@@ -4,6 +4,6 @@ module.exports = {
     name: Events.ClientReady,
     once: true,
     execute(client) {
-        console.log(`${client.user.tag}が正常に起動しました`)
+        console.log(`${client.user.tag}が正常に起動しました`);
     }
 }
