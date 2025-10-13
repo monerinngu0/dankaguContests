@@ -60,7 +60,7 @@ module.exports = {
 					}; break;
 					case "isDelete": {
 						contestDB.delete(contestId);
-						await interaction.reply({ content: "正常に削除されました。", flags: MessageFlags.Ephemeral });
+						onDelete(interaction, contest, contestId);
 					}; break;
 				}
 			} else if (shape[0] === 'p') {
@@ -300,6 +300,16 @@ async function onInformation(interaction, contest, contestId, type) {
 		.addComponents(playersMenu);
 					
 	await interaction.reply({ embeds: [embed], components: [actionRow], flags: MessageFlags.Ephemeral });
+}
+
+async function onDelete(interaction, contest, contestId) {
+	const channel = await interaction.client.channels.fetch(contest.ids.messageId);
+	const message = await channel.messages.fetch(contest.ids.messageId);
+	
+	// APIの仕様上できないケースがあるのでクライアント側で手動で消してほC 
+	//await message.delete();
+
+	await interaction.reply({ content: "正常に削除されました。", flags: MessageFlags.Ephemeral });
 }
 
 async function selectPlayer(interaction, contest, contestId, type) {

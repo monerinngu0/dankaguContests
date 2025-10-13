@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const UtilityDB = require("../../utilityDB");
+const { channel } = require("node:diagnostics_channel");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -28,6 +29,7 @@ module.exports = {
             "gachi": [],
             "enjoi": [],
             "admin": [interaction.user.id],
+            "ids": { "channelId": "", "messageId": "" },
         }
 
         contestDB.save(contest);
@@ -60,7 +62,11 @@ module.exports = {
         const actionRow = new ActionRowBuilder()
             .addComponents(gachiButton, enjoiButton, leaveButton, configButton);
 
-        await interaction.channel.send({ embeds: [descriptionEmbed], components: [actionRow] });
+        const sent = await interaction.channel.send({ embeds: [descriptionEmbed], components: [actionRow] });
         await interaction.reply({ content: "正常に準備が完了しました。", flags: MessageFlags.Ephemeral });
+
+        contest.ids.channelId = sent.channelId;
+        contest.ids.messageId = sent.messageId;
+        contestDB.save(contest);
 	}
 }
