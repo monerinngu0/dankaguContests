@@ -55,9 +55,7 @@ module.exports = {
 				switch (interaction.customId) {
 					case "gachi": await onInformation(interaction, contest, contestId, "gachi"); break;
 					case "enjoi": await onInformation(interaction, contest, contestId, "enjoi"); break;
-					case "isStart": {
-
-					}; break;
+					case "isStart": onStart(interaction, contest, contestId); break;
 					case "isDelete": {
 						contestDB.delete(contestId);
 						onDelete(interaction, contest, contestId);
@@ -300,6 +298,14 @@ async function onInformation(interaction, contest, contestId, type) {
 		.addComponents(playersMenu);
 					
 	await interaction.reply({ embeds: [embed], components: [actionRow], flags: MessageFlags.Ephemeral });
+}
+
+async function onStart(interaction, contest, contestId) {
+    contest.isActive = true;
+
+    const embed = new EmbedBuilder()
+        .setColor(0x007FFF)
+		.setTitle("～大会開催中～")
 }
 
 async function onDelete(interaction, contest, contestId) {

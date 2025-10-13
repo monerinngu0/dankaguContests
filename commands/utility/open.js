@@ -25,7 +25,7 @@ module.exports = {
         }
 
         const contest = {
-            "isActive": 0,
+            "isActive": false,
             "gachi": [],
             "enjoi": [],
             "admin": [interaction.user.id],
