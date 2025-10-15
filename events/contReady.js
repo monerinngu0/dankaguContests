@@ -1,20 +1,6 @@
 const { Events, MessageFlags, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require("discord.js");
 
-const fs = require("node:fs");
-const path = require("node:path");
-
-const UtilityDB = require("../utilityDB");
-
-const Database = require("better-sqlite3");
-const dbPath = path.resolve(__dirname, "../db/contests.db");
-const db = new Database(dbPath);
-// テーブルがない場合作成
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS contests (
-    id TEXT PRIMARY KEY,
-    data TEXT NOT NULL
-  )
-`).run();
+const UtilityDB = require("../utilityDB.js");
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -25,7 +11,7 @@ module.exports = {
 		const embedFooter = interaction.message.embeds[0].footer.text;
 		const shape = embedFooter.split(/\//); // [a-z]/{id}
 
-		const contestId = shape[1];
+		const [scheme, contestId] = shape;
 
 		const contestDB = new UtilityDB(contestId);
 
@@ -37,7 +23,7 @@ module.exports = {
        	}
 
 		if (interaction.isButton()) {
-			if (shape[0] == 'c') {
+			if (scheme == 'c') {
 				switch (interaction.customId) {
 					case "gachi": contest = await onJoinButton(interaction, contest, contestId, "gachi"); break;
 					case "enjoi": contest = await onJoinButton(interaction, contest, contestId, "enjoi"); break;
@@ -45,30 +31,30 @@ module.exports = {
 					case "config": await onConfigButton(interaction, contest, contestId); break;
 
 				}
-			} else if (shape[0] == 'm') {
+			} else if (scheme == 'm') {
 				switch (interaction.customId) {
 					case "start": await onStartButton(interaction, contest, contestId); break;
 					case "delete": await onDeleteButton(interaction, contest, contestId); break;
 					case "info": await onInfoButton(interaction, contest, contestId); break;
 				}
-			} else if (shape[0] == 'n') {
+			} else if (scheme == 'n') {
 				switch (interaction.customId) {
 					case "gachi": await onInformation(interaction, contest, contestId, "gachi"); break;
 					case "enjoi": await onInformation(interaction, contest, contestId, "enjoi"); break;
-					case "isStart": onStart(interaction, contest, contestId); break;
+					case "isStart": /* contStartに記述 */ break;
 					case "isDelete": {
-						contestDB.delete(contestId);
-						onDelete(interaction, contest, contestId);
+						contestDB.delete();
+						await onDelete(interaction, contest, contestId);
 					}; break;
 				}
-			} else if (shape[0] === 'p') {
+			} else if (scheme === 'p') {
 				if (interaction.customId.startsWith("leave:")) {
 					const playerId = interaction.customId.split(/:/)[1];
 					contest = await onLeaveButton(interaction, contest, contestId, playerId);
 				}
 			}
 		} else if (interaction.isStringSelectMenu()) {
-			if (shape[0] == 'o') {
+			if (scheme == 'o') {
 				switch (interaction.customId) {
 					case "gachi": await selectPlayer(interaction, contest, contestId, "gachi"); break;
 					case "enjoi": await selectPlayer(interaction, contest, contestId, "enjoi"); break;
@@ -76,7 +62,11 @@ module.exports = {
 			}
 		}
 
-		contestDB.save(contest); return;
+		if (contest && typeof contest === "object" && !Array.isArray(contest)) {
+    		contestDB.save(contest);
+		}
+
+		return;
 	}
 }
 
@@ -90,15 +80,14 @@ async function onJoinButton(interaction, contest, contestId, type) {
 		return contest;
 	}
 
-	if (contest[type].includes(interaction.user.id)) {
+	if (contest[type].hasOwnProperty(interaction.user.id)) {
 		await interaction.reply({ content: `既に${typeName}部門で参加中です。`, flags: MessageFlags.Ephemeral });
 		return contest;
 	}
 
-	const newContest = contest[opposedType].filter(id => id != interaction.user.id);
-	contest[opposedType] = newContest;
+	delete contest[opposedType][interaction.user.id];
 
-	contest[type].push(interaction.user.id);
+	contest[type][interaction.user.id] = 0;
 
 	await interaction.reply({content: `${typeName}部門に参加登録しました。`, flags: MessageFlags.Ephemeral });
 
@@ -122,30 +111,19 @@ async function onLeaveButton(interaction, contest, contestId, playerId = -1) {
 		return;
 	}
 
-	const newGachiContest = [];
-	for (let i = 0; i < contest["gachi"].length; i++) {
-		if (contest["gachi"][i] != leavePlayerId) {
-			newGachiContest.push(contest["gachi"][i]);
-		}
-	}
+	const gachiLeft = contest["gachi"].hasOwnProperty(leavePlayerId);
+	const enjoiLeft = contest["enjoi"].hasOwnProperty(leavePlayerId);
 
-	const newEnjoiContest = [];
-	for (let i = 0; i < contest["enjoi"].length; i++) {
-		if (contest["enjoi"][i] != leavePlayerId) {
-			newEnjoiContest.push(contest["enjoi"][i]);
-		}
-	}
+	delete contest["gachi"][leavePlayerId];
+	delete contest["enjoi"][leavePlayerId];
 
-	if (contest["gachi"].length != newGachiContest.length) {
+	if (gachiLeft) {
 		await interaction.reply({ content: `${playerName}をガチ部門から除外しました。`, flags: MessageFlags.Ephemeral });
-	} else if (contest["enjoi"].length != newEnjoiContest.length) {
+	} else if (enjoiLeft) {
 		await interaction.reply({ content: `${playerName}をエンジョイ部門から除外しました。`, flags: MessageFlags.Ephemeral });
 	} else {
 		await interaction.reply({ content: `${playerName}は${contestId}大会に参加していません。`, flags: MessageFlags.Ephemeral });
 	}
-
-	contest["gachi"] = newGachiContest;
-	contest["enjoi"] = newEnjoiContest;
 
 	return contest;
 }
@@ -246,14 +224,14 @@ async function onInfoButton(interaction, contest, contestId) {
 async function onInformation(interaction, contest, contestId, type) {
 	const typeName = type == "gachi" ? "ガチ" : "エンジョイ";
 
-	if (contest[type].length == 0) {
+	if (Object.keys(contest[type]).length == 0) {
 		await interaction.reply({ content: `${typeName}部門の参加者が存在しません。`, flags: MessageFlags.Ephemeral });
 		return;
 	}
 
 	let playerDatas = [];
 
-	for (const id of contest[type]) {
+	for (const id in contest[type]) {
 		const memberExists = await interaction.guild.members.fetch(id, { force: false }).catch(() => null);
 
 		if (memberExists == null) {
@@ -275,7 +253,9 @@ async function onInformation(interaction, contest, contestId, type) {
 	playerDatas = playerDatas.filter(([id, name]) => name != null);
 
 	const excludedPlayerDatas = playerDatas.map(([id]) => id);
-	contest[type] = contest[type].filter(id => !excludedPlayerDatas.includes(id));
+	for (const id of excludedPlayerDatas) {
+		delete contest[type][id];
+	}
 
 	const embed = new EmbedBuilder()
 		.setColor(0x007FFF)
@@ -300,16 +280,8 @@ async function onInformation(interaction, contest, contestId, type) {
 	await interaction.reply({ embeds: [embed], components: [actionRow], flags: MessageFlags.Ephemeral });
 }
 
-async function onStart(interaction, contest, contestId) {
-    contest.isActive = true;
-
-    const embed = new EmbedBuilder()
-        .setColor(0x007FFF)
-		.setTitle("～大会開催中～")
-}
-
 async function onDelete(interaction, contest, contestId) {
-	const channel = await interaction.client.channels.fetch(contest.ids.messageId);
+	const channel = await interaction.client.channels.fetch(contest.ids.channelId);
 	const message = await channel.messages.fetch(contest.ids.messageId);
 	
 	// APIの仕様上できないケースがあるのでクライアント側で手動で消してほC 

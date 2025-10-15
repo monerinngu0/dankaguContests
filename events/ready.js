@@ -3,7 +3,7 @@ const { Events } = require('discord.js');
 module.exports = {
     name: Events.ClientReady,
     once: true,
-    execute(client) {
+    async execute(client) {
         console.log(`${client.user.tag}が正常に起動しました`);
     }
 }

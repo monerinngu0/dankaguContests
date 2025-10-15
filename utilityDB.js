@@ -4,8 +4,6 @@ const Database = require("better-sqlite3");
 const dbPath = path.resolve(__dirname, "./db/contests.db");
 const db = new Database(dbPath);
 
-const idsId = require("./config.json").idsId;
-
 db.prepare(`
     CREATE TABLE IF NOT EXISTS contests (
         id TEXT PRIMARY KEY,
@@ -26,17 +24,6 @@ class UtilityDB {
             INSERT INTO contests (id, data) VALUES (?, ?)
             ON CONFLICT(id) DO UPDATE SET data = excluded.data
         `).run(this.id, JSON.stringify(contest));
-    }
-
-    setId(ids) {
-        const idDB = new UtilityDB(idsId);
-        idDB.save(ids);
-    }
-
-    getId() {
-        const idDB = new UtilityDB(idsId);
-        const data = idDB.load();
-        return data == -1 ? {} : data;
     }
 
     delete() {

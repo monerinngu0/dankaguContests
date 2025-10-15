@@ -1,9 +1,6 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
-const fs = require("node:fs");
-const path = require("node:path");
 
-const UtilityDB = require("../../utilityDB");
-const { channel } = require("node:diagnostics_channel");
+const UtilityDB = require("../../utilityDB.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -26,8 +23,8 @@ module.exports = {
 
         const contest = {
             "isActive": false,
-            "gachi": [],
-            "enjoi": [],
+            "gachi": {},
+            "enjoi": {},
             "admin": [interaction.user.id],
             "ids": { "channelId": "", "messageId": "" },
         }

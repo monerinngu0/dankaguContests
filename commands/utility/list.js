@@ -15,7 +15,7 @@ module.exports = {
 
 		const contests = UtilityDB.all();
 
-        if (contests.length === 0) {
+        if (Object.keys(contests).length === 0) {
             await interaction.reply({ content: "現在大会は存在しません。", flags: MessageFlags.Ephemeral });
             return;
         }
@@ -26,8 +26,8 @@ module.exports = {
             .setDescription(
                 contests.map(c => {
                     const status = c.data.isActive ? "開催中" : "募集中";
-                    const gachiCount = c.data.gachi.length;
-                    const enjoiCount = c.data.enjoi.length;
+                    const gachiCount = Object.keys(c.data.gachi).length;
+                    const enjoiCount = Object.keys(c.data.enjoi).length;
                     return `**ID:** ${c.id} | **状態:** ${status} | **ガチ:** ${gachiCount}人 | **エンジョイ:** ${enjoiCount}人`;
                 }).join('\n')
             );
